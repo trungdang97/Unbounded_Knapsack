@@ -13,6 +13,7 @@ namespace Unbounded_Knapsack
         public string binary;
         public int total_weight;
         public int total_value;
+        public double selection_rate;
 
         //constructor
         public Chromosome(int length)
@@ -24,53 +25,76 @@ namespace Unbounded_Knapsack
         public void Generate(int bag_capacity, Item[] Items)
         {
             int max_volume = bag_capacity / Items.Min(i => i.Weight);
+            int temp = bag_capacity;
             gene = new int[Items.Length];
             for (int i = 0; i < gene.Length; i++)
             {
                 gene[i] = RandomNumber(0, bag_capacity / Items[i].Weight);
                 bag_capacity -= gene[i] * Items[i].Weight;
             }
-            Evaluate(Items);
+            Evaluate(Items, temp);
             BinaryEncode(max_volume);
             Decimal();
-
-            //Thread.Sleep(70);
         }
 
         //operators
-        public void Crossover(Chromosome pair)
+        public Chromosome Crossover(Chromosome pair, double mutation_rate, Item[] Items, int bag_capacity)
         {
-            Random rand = new Random();
-            Chromosome child
+            Chromosome child = new Chromosome(gene.Length);
             //uniform crossover
-            for(int i = 0; i < binary.Length; i++)
+            for (int i = 0; i < binary.Length; i++)
             {
-                if (rand.NextDouble() < 0.5)
+                if (RandomDouble() < 0.5)
                 {
-
+                    child.binary += binary[i];
+                }
+                else
+                {
+                    child.binary += pair.binary[i];
                 }
             }
+            child.Decimal();
+            child.Mutate(mutation_rate, bag_capacity, Items);
+
+            return child;
         }
         public void Mutate(double mutation_rate, int bag_capacity, Item[] Items)
         {
             int max_volume = bag_capacity / Items.Min(i => i.Weight);
-            Random rand = new Random();
+            int temp_cap = 0;
+            int temp_alelle = 0;
             for (int i = 0; i < gene.Length; i++)
             {
-                if (rand.NextDouble() < mutation_rate)
+                if (RandomDouble() < mutation_rate)
                 {
-                    gene[i] = RandomNumber(0, bag_capacity / Items[i].Weight);
+                    temp_alelle = gene[i];
+                    temp_cap = total_weight - gene[i] * Items[i].Weight;
+                    while (true)
+                    {
+                        gene[i] = RandomNumber(0, (bag_capacity - total_weight) / Items[i].Weight);
+                        if (gene[i] != temp_alelle)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
-            Evaluate(Items);
+            Evaluate(Items, bag_capacity);
             BinaryEncode(max_volume);
         }
-        public void Evaluate(Item[] Items)
+        public void Evaluate(Item[] Items, int bag_capacity)
         {
+            total_weight = 0;
+            total_value = 0;
             for (int i = 0; i < gene.Length; i++)
             {
                 total_weight += gene[i] * Items[i].Weight;
                 total_value += gene[i] * Items[i].Value;
+                if (total_weight > bag_capacity)
+                {
+                    total_value = -1;
+                    break;
+                }
             }
         }
 
@@ -84,6 +108,13 @@ namespace Unbounded_Knapsack
             lock (syncLock)
             { // synchronize
                 return random.Next(min, max);
+            }
+        }
+        public static double RandomDouble()
+        {
+            lock (syncLock)
+            { // synchronize
+                return random.NextDouble();
             }
         }
 
