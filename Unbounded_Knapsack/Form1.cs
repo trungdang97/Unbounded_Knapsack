@@ -14,12 +14,14 @@ namespace Unbounded_Knapsack
     public partial class Form1 : Form
     {        
         Item[] Items;
-        int pop = 500;
+        int pop = 20;
         int gene_length = 0;
         int bag_capacity = 0;
         double mutation_prob = 0.3;
         double crossover_prob = 0.8;
+        
         List<Chromosome> population;
+        List<Chromosome> new_population = new List<Chromosome>();
 
         //List<Chromosome> next_gen = new List<Chromosome>();
 
@@ -78,11 +80,7 @@ namespace Unbounded_Knapsack
             int iterations = int.Parse(textBox1.Text);
             int i = 0;
             Chromosome best = new Chromosome(gene_length);           
-            //if (population != null)
-            //{
-            //    population.Clear();
-            //}           
-            //button1_Click(this,null);
+            
             while(i<iterations)
             {
                 if (best.total_value < population[0].total_value)
@@ -105,17 +103,37 @@ namespace Unbounded_Knapsack
             //selection: tournament selection            
             Chromosome dad = new Chromosome(gene_length);
             Chromosome mom = new Chromosome(gene_length);
-
+            
+            SortAsc();
             SelectionRate();
+
+            //elitism: keep 1-2 best individual(s)
+            new_population.Add(new Chromosome(gene_length));
+            new_population[0].Clone(population[population.Count - 1]);
+
             //crossover + mutation
-            for (int i = 0; i < pop / 2; i++)
+            while(new_population.Count < pop)
             {
-                dad = TournamentSelection();
-                mom = TournamentSelection();
-                //dad = RouletteSelection();
-                //mom = RouletteSelection();
-                population.Add(dad.Crossover(mom, mutation_prob, Items, bag_capacity));
+                if (RandomDouble() < crossover_prob)
+                {
+                    dad = RouletteSelection();
+                    mom = RouletteSelection();
+                    new_population.Add(dad.Crossover(mom, mutation_prob, Items, bag_capacity));
+                    if(new_population[new_population.Count-1].total_weight > bag_capacity)
+                    {
+                        new_population.RemoveAt(new_population.Count - 1);
+                    }
+                }
+                else
+                {
+                    new_population.Add(RouletteSelection());
+                }
             }
+            //replace the old population
+            population.Clear();
+            population.AddRange(new_population);
+            new_population.Clear();
+
             //sort descending
             SortDesc();
             while (population.Count > pop)
@@ -152,7 +170,7 @@ namespace Unbounded_Knapsack
             return parent;
         }
         void SelectionRate()
-        {
+        {            
             int ValueSum = population.Sum(o=>o.total_value);
             population[0].selection_rate = (double)population[0].total_value / ValueSum;
             for (int i = 1; i < population.Count; i++)
@@ -161,30 +179,13 @@ namespace Unbounded_Knapsack
             }
         }
 
-        Chromosome TournamentSelection()
-        {
-            List<Chromosome> tournament = new List<Chromosome>();
-            Chromosome parent = new Chromosome(gene_length);
-            int index = 0;
-            for (int i = 0; i < k; i++)
-            {
-                while (true)
-                {
-                    index = RandomNumber(0, population.Count - 1);
-                    if (!tournament.Contains(population[index]))
-                    {
-                        tournament.Add(population[index]);
-                        break;
-                    }
-                }
-            }
-            tournament.OrderByDescending(o => o.total_value);
-            return tournament[0];
-        }
-
         void SortDesc()
         {
             population = population.OrderByDescending(o => o.total_value).ToList();
+        }
+        void SortAsc()
+        {
+            population = population.OrderBy(o => o.total_value).ToList();
         }
 
         void ShowInitPop()
