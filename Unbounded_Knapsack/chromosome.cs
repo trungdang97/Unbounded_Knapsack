@@ -20,6 +20,15 @@ namespace Unbounded_Knapsack
         {
             gene = new int[length];
         }
+        //clone
+        public void Clone(Chromosome c)
+        {
+            gene = c.gene;
+            binary = c.binary;
+            total_weight = c.total_weight;
+            total_value = c.total_value;
+            selection_rate = selection_rate;
+        }
 
         //generate random chromosome value
         public void Generate(int bag_capacity, Item[] Items)
@@ -40,6 +49,7 @@ namespace Unbounded_Knapsack
         //operators
         public Chromosome Crossover(Chromosome pair, double mutation_rate, Item[] Items, int bag_capacity)
         {
+            int max_volume = bag_capacity / Items.Min(i => i.Weight);
             Chromosome child = new Chromosome(gene.Length);
             //uniform crossover
             for (int i = 0; i < binary.Length; i++)
@@ -55,6 +65,7 @@ namespace Unbounded_Knapsack
             }
             child.Decimal();
             child.Mutate(mutation_rate, bag_capacity, Items);
+            child.BinaryEncode(max_volume);
 
             return child;
         }
