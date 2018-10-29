@@ -14,7 +14,7 @@ namespace Unbounded_Knapsack
         public int total_weight;
         public int total_value;
         public double selection_rate;
-
+        public double fitness;
         //constructor
         public Chromosome(int length)
         {
@@ -27,6 +27,7 @@ namespace Unbounded_Knapsack
             binary = c.binary;
             total_weight = c.total_weight;
             total_value = c.total_value;
+            fitness = c.fitness;
             selection_rate = selection_rate;
         }
 
@@ -107,6 +108,7 @@ namespace Unbounded_Knapsack
                     break;
                 }
             }
+            fitness = (double)1 / total_value;
         }
 
         //Utilities

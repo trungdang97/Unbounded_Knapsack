@@ -21,7 +21,7 @@ namespace Unbounded_Knapsack
         double crossover_prob = 0.8;
         
         List<Chromosome> population;
-        List<Chromosome> new_population = new List<Chromosome>();
+        List<Chromosome> new_population;
 
         //List<Chromosome> next_gen = new List<Chromosome>();
 
@@ -69,7 +69,7 @@ namespace Unbounded_Knapsack
                 }
             }
             InitPop();            
-            textBox1.Text = "1000";
+            textBox1.Text = "1";
             button2.Enabled = true;
         }
 
@@ -103,8 +103,9 @@ namespace Unbounded_Knapsack
             //selection: tournament selection            
             Chromosome dad = new Chromosome(gene_length);
             Chromosome mom = new Chromosome(gene_length);
-            
-            SortAsc();
+            Chromosome child = new Chromosome(gene_length);
+            new_population = new List<Chromosome>(pop);
+            SortDesc();
             SelectionRate();
 
             //elitism: keep 1-2 best individual(s)
@@ -118,15 +119,21 @@ namespace Unbounded_Knapsack
                 {
                     dad = RouletteSelection();
                     mom = RouletteSelection();
-                    new_population.Add(dad.Crossover(mom, mutation_prob, Items, bag_capacity));
-                    if(new_population[new_population.Count-1].total_weight > bag_capacity)
+                    child.Clone(dad.Crossover(mom, mutation_prob, Items, bag_capacity));
+                    if (!new_population.Contains(child))
                     {
-                        new_population.RemoveAt(new_population.Count - 1);
+                        new_population.Add(new Chromosome(gene_length));
+                        new_population[new_population.Count - 1].Clone(child);
                     }
                 }
                 else
                 {
-                    new_population.Add(RouletteSelection());
+                    child.Clone(RouletteSelection());
+                    if (!new_population.Contains(child))
+                    {
+                        new_population.Add(new Chromosome(gene_length));
+                        new_population[new_population.Count - 1].Clone(child);
+                    }
                 }
             }
             //replace the old population
@@ -134,12 +141,12 @@ namespace Unbounded_Knapsack
             population.AddRange(new_population);
             new_population.Clear();
 
-            //sort descending
-            SortDesc();
-            while (population.Count > pop)
-            {
-                population.RemoveRange(pop, population.Count - pop);
-            }
+            ////sort descending
+            //SortDesc();
+            //while (population.Count > pop)
+            //{
+            //    population.RemoveRange(pop, population.Count - pop);
+            //}
 
             //adaptive
             //if (r % 200 == 0)
@@ -158,10 +165,11 @@ namespace Unbounded_Knapsack
         {
             Chromosome parent = new Chromosome(gene_length);
             double cumulative = 0;
-            for(int i = 0; i < population.Count; i++)
+            double rate = RandomDouble();
+            for (int i = 0; i < population.Count; i++)
             {
                 cumulative += population[i].selection_rate;
-                if(cumulative >= RandomDouble())
+                if(cumulative >= rate)
                 {
                     parent.Clone(population[i]);
                     break;
@@ -171,22 +179,22 @@ namespace Unbounded_Knapsack
         }
         void SelectionRate()
         {            
-            int ValueSum = population.Sum(o=>o.total_value);
-            population[0].selection_rate = (double)population[0].total_value / ValueSum;
+            double FitnessSum = population.Sum(o=>o.fitness);
+            population[0].selection_rate = population[0].fitness / FitnessSum;
             for (int i = 1; i < population.Count; i++)
             {
-                population[i].selection_rate = (double)population[i].total_value / ValueSum + population[i-1].selection_rate;
+                population[i].selection_rate = population[i].fitness / FitnessSum + population[i-1].selection_rate;
             }
         }
 
         void SortDesc()
         {
-            population = population.OrderByDescending(o => o.total_value).ToList();
+            population = population.OrderBy(o => o.fitness).ToList();
         }
-        void SortAsc()
-        {
-            population = population.OrderBy(o => o.total_value).ToList();
-        }
+        //void SortAsc()
+        //{
+        //    population = population.OrderBy(o => o.total_value).ToList();
+        //}
 
         void ShowInitPop()
         {
