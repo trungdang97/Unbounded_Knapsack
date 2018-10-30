@@ -49,7 +49,7 @@ namespace Unbounded_Knapsack
                 string file;
 
                 file = File.ReadAllText(filepath);
-                string[] intValues = file.Split(new char[] { '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] intValues = file.Split(new char[] { '\t', '\n','\r' }, StringSplitOptions.RemoveEmptyEntries);
                 //leave out number or items and capacity 
                 int[] parsed = new int[intValues.Length - 2];
                 //
@@ -64,10 +64,10 @@ namespace Unbounded_Knapsack
                 bag_capacity = int.Parse(intValues[intValues.Length - 1]);
 
                 Items = new Item[gene_length];
-                
-                for (int i = 0,j=0; i < parsed.Length / 2; i++, j=j+2)
+
+                for (int i = 0, j = 0; i < parsed.Length / 2; i++, j = j + 2)
                 {
-                    Items[i] = new Item(parsed[j], parsed[j + 1]);                  
+                    Items[i] = new Item(parsed[j], parsed[j + 1]);
                 }
             }
             InitPop();
@@ -85,7 +85,7 @@ namespace Unbounded_Knapsack
             Chromosome best = new Chromosome(gene_length);
 
             while (population[0].total_value != population.Sum(o => o.total_value) / pop)
-            //while (i < 1000)
+            //while (i < 10)
             {
                 if (best.total_value < population[0].total_value)
                 {
@@ -100,7 +100,7 @@ namespace Unbounded_Knapsack
             ShowBest(best);
 
             button1.Enabled = true;
-            button2.Enabled = false;
+            button2.Enabled = true;
             button3.Enabled = true;
         }
 
@@ -124,7 +124,7 @@ namespace Unbounded_Knapsack
                 }
             }
             while (population.Count < pop * 2)
-            {                
+            {
                 fresh.Generate(bag_capacity, Items);
                 if (!population.Contains(fresh) && fresh.total_weight <= bag_capacity)
                 {
